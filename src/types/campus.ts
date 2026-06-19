@@ -20,11 +20,14 @@ export interface CampusGraph {
 
 export interface RouteResult {
   path: string[];
-  distance: number;
-  edges: CampusEdge[];
+  totalDistance: number;
+  walkingTimeSeconds: number;
+  nodesExplored: number;
 }
 
 export interface AlgoComparison {
-  dijkstra: RouteResult & { elapsed: number };
-  astar: RouteResult & { elapsed: number };
+  dijkstra: RouteResult | null;
+  aStar: RouteResult | null;
+  recommended: "dijkstra" | "aStar";
+  reason: string;
 }
