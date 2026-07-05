@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import dynamic from "next/dynamic";
 import Controls from "@/components/Controls";
 import RouteDetails from "@/components/RouteDetails";
-import { compareAlgorithms } from "@/lib/algorithms";
+import { compareAlgorithms, dijkstra, aStar } from "@/lib/algorithms";
 import { CAMPUS_GRAPH } from "@/data/graph";
-import type { RouteResult } from "@/types/campus";
+import type { RouteResult, AlgoComparison } from "@/types/campus";
 
 // MapCanvas uses canvas/pdfjs which require browser environment
 const MapCanvas = dynamic(() => import("@/components/MapCanvas"), {
@@ -23,28 +23,47 @@ export default function Home() {
   const [endNode, setEndNode] = useState("canteen");
   const [accessibleOnly, setAccessibleOnly] = useState(false);
   const [avoidCovered, setAvoidCovered] = useState(false);
+  const [algorithmMode, setAlgorithmMode] = useState<"aStar" | "dijkstra" | "compare">("compare");
 
   const [currentPath, setCurrentPath] = useState<string[]>([]);
   const [result, setResult] = useState<RouteResult | null>(null);
   const [algorithmUsed, setAlgorithmUsed] = useState<string>("");
+  const [comparisonData, setComparisonData] = useState<AlgoComparison | null>(null);
 
   const handleFindPath = () => {
-    const comparison = compareAlgorithms(CAMPUS_GRAPH, startNode, endNode, {
-      accessibleOnly,
-      avoidCovered,
-    });
+    const options = { accessibleOnly, avoidCovered };
 
-    const bestResult =
-      comparison.recommended === "aStar" ? comparison.aStar : comparison.dijkstra;
+    if (algorithmMode === "compare") {
+      const comparison = compareAlgorithms(CAMPUS_GRAPH, startNode, endNode, options);
+      setComparisonData(comparison);
 
-    if (bestResult) {
-      setCurrentPath(bestResult.path);
-      setResult(bestResult);
-      setAlgorithmUsed(comparison.recommended === "aStar" ? "A* Search" : "Dijkstra");
+      const bestResult =
+        comparison.recommended === "aStar" ? comparison.aStar : comparison.dijkstra;
+
+      if (bestResult) {
+        setCurrentPath(bestResult.path);
+        setResult(bestResult);
+        setAlgorithmUsed(comparison.recommended === "aStar" ? "A* Search" : "Dijkstra");
+      } else {
+        setCurrentPath([]);
+        setResult(null);
+        setComparisonData(null);
+        alert("No valid path found between these locations with the current constraints.");
+      }
     } else {
-      setCurrentPath([]);
-      setResult(null);
-      alert("No valid path found between these locations with the current constraints.");
+      const runAlgo = algorithmMode === "aStar" ? aStar : dijkstra;
+      const algoResult = runAlgo(CAMPUS_GRAPH, startNode, endNode, options);
+      setComparisonData(null);
+
+      if (algoResult) {
+        setCurrentPath(algoResult.path);
+        setResult(algoResult);
+        setAlgorithmUsed(algorithmMode === "aStar" ? "A* Search" : "Dijkstra");
+      } else {
+        setCurrentPath([]);
+        setResult(null);
+        alert("No valid path found between these locations with the current constraints.");
+      }
     }
   };
 
@@ -69,10 +88,12 @@ export default function Home() {
             setAccessibleOnly={setAccessibleOnly}
             avoidCovered={avoidCovered}
             setAvoidCovered={setAvoidCovered}
+            algorithmMode={algorithmMode}
+            setAlgorithmMode={setAlgorithmMode}
             onFindPath={handleFindPath}
           />
 
-          <RouteDetails result={result} algorithmUsed={algorithmUsed} />
+          <RouteDetails result={result} algorithmUsed={algorithmUsed} comparisonData={comparisonData} />
         </div>
       </div>
 

@@ -12,6 +12,8 @@ interface ControlsProps {
   setAccessibleOnly: (val: boolean) => void;
   avoidCovered: boolean;
   setAvoidCovered: (val: boolean) => void;
+  algorithmMode: "aStar" | "dijkstra" | "compare";
+  setAlgorithmMode: (mode: "aStar" | "dijkstra" | "compare") => void;
   onFindPath: () => void;
 }
 
@@ -24,6 +26,8 @@ export default function Controls({
   setAccessibleOnly,
   avoidCovered,
   setAvoidCovered,
+  algorithmMode,
+  setAlgorithmMode,
   onFindPath,
 }: ControlsProps) {
   const sortedNodes = useMemo(() => {
@@ -94,11 +98,37 @@ export default function Controls({
         </label>
       </div>
 
+      <div className="space-y-2 pt-2 border-t border-gray-100">
+        <label className="block text-sm font-medium text-gray-700">
+          Algorithm
+        </label>
+        <div className="flex rounded-lg border border-gray-200 overflow-hidden">
+          {([
+            { value: "aStar" as const, label: "A*" },
+            { value: "dijkstra" as const, label: "Dijkstra" },
+            { value: "compare" as const, label: "Compare" },
+          ]).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setAlgorithmMode(opt.value)}
+              className={`flex-1 text-sm font-medium py-2 px-3 transition-all ${
+                algorithmMode === opt.value
+                  ? "bg-emerald-600 text-white shadow-inner"
+                  : "bg-gray-50 text-gray-600 hover:bg-gray-100"
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <button
         onClick={onFindPath}
         className="w-full text-white bg-emerald-600 hover:bg-emerald-700 focus:ring-4 focus:ring-emerald-300 font-medium rounded-lg text-sm px-5 py-3 text-center transition-all shadow-sm hover:shadow active:scale-[0.98]"
       >
-        Find Best Path
+        {algorithmMode === "compare" ? "Compare Algorithms" : "Find Path"}
       </button>
     </div>
   );
